@@ -110,7 +110,9 @@ def main():
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 run = False
-
+            elif event.type == pg.KEYDOWN:
+                if event.key == pg.K_SPACE:
+                    bird.jump()
         bird.move()
         draw_window(win, bird)
     pg.quit()
