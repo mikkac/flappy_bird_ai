@@ -1,10 +1,11 @@
 import os
 import random
-import time
 from typing import List
 
 import neat as nt
 import pygame as pg
+
+pg.font.init()
 
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
@@ -22,6 +23,8 @@ BASE_IMG: pg.Surface = pg.transform.scale2x(
 BG_IMG: pg.Surface = pg.transform.scale2x(
     pg.image.load(os.path.join("images", "bg.png"))
 )
+
+SCORE_FONT = pg.font.SysFont("roboto", 50)
 
 
 class Bird:
@@ -157,11 +160,14 @@ class Base:
         win.blit(self._image, (self.x2, self.y))
 
 
-def draw_window(win, base: Base, pipes: List[Pipe], bird: Bird) -> None:
+def draw_window(win, base: Base, pipes: List[Pipe], bird: Bird, score: int) -> None:
     win.blit(BG_IMG, (0, 0))
 
     for pipe in pipes:
         pipe.draw(win)
+
+    text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
+    win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
     base.draw(win)
     bird.draw(win)
     pg.display.update()
@@ -203,7 +209,10 @@ def main():
         for r_pipe in pipes_to_remove:
             pipes.remove(r_pipe)
         bird.move()
-        draw_window(win, base, pipes, bird)
+        if bird.y + bird.image.get_height() >= WIN_HEIGHT - 70:
+            run = False
+
+        draw_window(win, base, pipes, bird, score)
     pg.quit()
     quit()
 
