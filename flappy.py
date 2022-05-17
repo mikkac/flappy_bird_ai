@@ -91,3 +91,25 @@ class Bird:
 
     def get_mask(self) -> pg.mask.Mask:
         return pg.mask.from_surface(self.image)
+
+
+def draw_window(win, bird: Bird) -> None:
+    win.blit(BG_IMG, (0, 0))
+    bird.draw(win)
+    pg.display.update()
+
+
+def main():
+    bird = Bird(200, 200)
+    win = pg.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+    run = True
+    while run:
+        for event in pg.event.get():
+            if event.type == pg.QUIT:
+                run = False
+        draw_window(win, bird)
+    pg.quit()
+    quit()
+
+
+main()
