@@ -115,9 +115,22 @@ class Pipe:
     def move(self) -> None:
         self.x -= self._velocity
 
-    def draw(self, win) -> None:
+    def draw(self, win) -> bool:
         win.blit(self.pipe_top, (self.x, self.top))
         win.blit(self.pipe_bottom, (self.x, self.bottom))
+
+    def collide(self, bird: Bird) -> None:
+        bird_mask: pg.mask.Mask = bird.get_mask()
+        top_mask: pg.mask.Mask = pg.mask.from_surface(self.pipe_top)
+        bottom_mask: pg.mask.Mask = pg.mask.from_surface(self.pipe_bottom)
+
+        top_offset = (self.x - bird.x, self.top - round(self.y))
+        bottom_offset = (self.x - bird.x, self.bottom - round(self.y))
+
+        t_point = bird_mask.overlap(top_mask, top_offset)
+        b_point = bird_mask.overlap(bottom_mask, bottom_offset)
+
+        return t_point or b_point
 
 
 def draw_window(win, bird: Bird) -> None:
