@@ -93,6 +93,33 @@ class Bird:
         return pg.mask.from_surface(self.image)
 
 
+class Pipe:
+    def __init__(self, x: float) -> None:
+        self._gap: float = 200.0
+        self._velocity: float = 0.0
+        self.x: float = x
+        self.height: float = 0.0
+        self.top: float = 0.0
+        self.bottom: float = 0.0
+        self.pipe_top = pg.transform.flip(PIPE_IMG, False, True)
+        self.pipe_bottom = PIPE_IMG
+
+        self.passed = False
+        self.set_height()
+
+    def set_height(self) -> None:
+        self.height = random.randrange(50, 450)
+        self.top = self.height - self.pipe_top.get_height()
+        self.bottom = self.height + self._gap
+
+    def move(self) -> None:
+        self.x -= self._velocity
+
+    def draw(self, win) -> None:
+        win.blit(self.pipe_top, (self.x, self.top))
+        win.blit(self.pipe_bottom, (self.x, self.bottom))
+
+
 def draw_window(win, bird: Bird) -> None:
     win.blit(BG_IMG, (0, 0))
     bird.draw(win)
