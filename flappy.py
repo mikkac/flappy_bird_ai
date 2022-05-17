@@ -96,7 +96,7 @@ class Bird:
 class Pipe:
     def __init__(self, x: float) -> None:
         self._gap: float = 200.0
-        self._velocity: float = 0.0
+        self._velocity: float = 5.0
         self.x: float = x
         self.height: float = 0.0
         self.top: float = 0.0
@@ -124,8 +124,8 @@ class Pipe:
         top_mask: pg.mask.Mask = pg.mask.from_surface(self.pipe_top)
         bottom_mask: pg.mask.Mask = pg.mask.from_surface(self.pipe_bottom)
 
-        top_offset = (self.x - bird.x, self.top - round(self.y))
-        bottom_offset = (self.x - bird.x, self.bottom - round(self.y))
+        top_offset = (self.x - bird.x, self.top - round(bird.y))
+        bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
 
         t_point = bird_mask.overlap(top_mask, top_offset)
         b_point = bird_mask.overlap(bottom_mask, bottom_offset)
@@ -157,17 +157,24 @@ class Base:
         win.blit(self._image, (self.x2, self.y))
 
 
-def draw_window(win, bird: Bird) -> None:
+def draw_window(win, base: Base, pipes: List[Pipe], bird: Bird) -> None:
     win.blit(BG_IMG, (0, 0))
+
+    for pipe in pipes:
+        pipe.draw(win)
+    base.draw(win)
     bird.draw(win)
     pg.display.update()
 
 
 def main():
-    bird = Bird(200, 200)
+    bird: Bird = Bird(230, 350)
+    base: Base = Base(WIN_HEIGHT - 70)
+    pipes: List[Pipe] = [Pipe(700)]
     win = pg.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
 
     clock = pg.time.Clock()
+    score: int = 0
     run = True
     while run:
         clock.tick(30)
@@ -177,8 +184,26 @@ def main():
             elif event.type == pg.KEYDOWN:
                 if event.key == pg.K_SPACE:
                     bird.jump()
+        base.move()
+        pipes_to_remove: List[Pipe] = []
+        add_pipe: bool = False
+        for pipe in pipes:
+            if pipe.collide(bird):
+                run = False
+            if pipe.x + pipe.pipe_top.get_width() < 0:
+                pipes_to_remove.append(pipe)
+            if not pipe.passed and pipe.x < bird.x:
+                pipe.passed = True
+                add_pipe = True
+            pipe.move()
+
+        if add_pipe:
+            score += 1
+            pipes.append(Pipe(600))
+        for r_pipe in pipes_to_remove:
+            pipes.remove(r_pipe)
         bird.move()
-        draw_window(win, bird)
+        draw_window(win, base, pipes, bird)
     pg.quit()
     quit()
 
