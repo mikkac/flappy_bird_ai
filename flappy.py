@@ -102,11 +102,16 @@ def draw_window(win, bird: Bird) -> None:
 def main():
     bird = Bird(200, 200)
     win = pg.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
+
+    clock = pg.time.Clock()
     run = True
     while run:
+        clock.tick(30)
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 run = False
+
+        bird.move()
         draw_window(win, bird)
     pg.quit()
     quit()
