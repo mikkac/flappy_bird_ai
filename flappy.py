@@ -133,6 +133,30 @@ class Pipe:
         return t_point or b_point
 
 
+class Base:
+    def __init__(self, y: float) -> None:
+        self._velocity: float = 5.0
+        self._width: float = BASE_IMG.get_width()
+        self._image: pg.Surface = BASE_IMG
+
+        self.y: float = y
+        self.x1: float = 0.0
+        self.x2: float = self._width
+
+    def move(self) -> None:
+        self.x1 -= self._velocity
+        self.x2 -= self._velocity
+
+        if self.x1 + self._width < 0:
+            self.x1 = self.x2 + self._width
+        if self.x2 + self._width < 0:
+            self.x2 = self.x1 + self._width
+
+    def draw(self, win) -> None:
+        win.blit(self._image, (self.x1, self.y))
+        win.blit(self._image, (self.x2, self.y))
+
+
 def draw_window(win, bird: Bird) -> None:
     win.blit(BG_IMG, (0, 0))
     bird.draw(win)
