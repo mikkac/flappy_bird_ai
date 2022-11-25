@@ -4,4 +4,6 @@ This project has been created with help of [TechWithTim tutorial](https://www.yo
 2) Usage of [NEAT](https://github.com/CodeReclaimers/neat-python) algorithm to train AI player
 
 ### Demo
-![](https://github.com/mikkac/flappy_bird_ai/blob/main/demo/demo.gif)
+<p align="center">
+  <img src="https://github.com/mikkac/flappy_bird_ai/blob/main/demo/demo.gif" alt="animated" />
+</p>
