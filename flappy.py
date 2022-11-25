@@ -160,7 +160,9 @@ class Base:
         win.blit(self._image, (self.x2, self.y))
 
 
-def draw_window(win, base: Base, pipes: List[Pipe], bird: Bird, score: int) -> None:
+def draw_window(
+    win, base: Base, pipes: List[Pipe], birds: List[Bird], score: int
+) -> None:
     win.blit(BG_IMG, (0, 0))
 
     for pipe in pipes:
@@ -169,12 +171,22 @@ def draw_window(win, base: Base, pipes: List[Pipe], bird: Bird, score: int) -> N
     text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
     base.draw(win)
-    bird.draw(win)
+    for bird in birds:
+        bird.draw(win)
     pg.display.update()
 
 
-def main():
-    bird: Bird = Bird(230, 350)
+def fitness(genomes, config: nt.config.Config) -> None:
+    nets: List[nt.nn.FeedForwardNetwork] = []
+    ge = []
+    birds: List[Bird] = []
+
+    for _, g in genomes:
+        g.fitness = 0
+        nets.append(nt.nn.FeedForwardNetwork.create(g, config))
+        birds.append(Bird(230, 350))
+        ge.append(g)
+
     base: Base = Base(WIN_HEIGHT - 70)
     pipes: List[Pipe] = [Pipe(700)]
     win = pg.display.set_mode((WIN_WIDTH, WIN_HEIGHT))
@@ -186,35 +198,84 @@ def main():
         clock.tick(30)
         for event in pg.event.get():
             if event.type == pg.QUIT:
-                run = False
-            elif event.type == pg.KEYDOWN:
-                if event.key == pg.K_SPACE:
-                    bird.jump()
+                pg.quit()
+                quit()
+
+        pipe_idx: int = 0
+        if len(birds) > 0:
+            if (
+                len(pipes) > 1
+                and birds[0].x > pipes[0].x + pipes[0].pipe_top.get_width()
+            ):
+                pipe_idx = 1
+        else:
+            run = False
+
+        for idx, bird in enumerate(birds):
+            bird.move()
+            ge[idx].fitness += 0.1
+            output = nets[idx].activate(
+                (
+                    bird.y,
+                    abs(bird.y - pipes[pipe_idx].height),
+                    abs(bird.y - pipes[pipe_idx].bottom),
+                )
+            )
+            if output[0] > 0.5:
+                bird.jump()
+
         base.move()
         pipes_to_remove: List[Pipe] = []
         add_pipe: bool = False
         for pipe in pipes:
-            if pipe.collide(bird):
-                run = False
+            for idx, bird in enumerate(birds):
+                if pipe.collide(bird):
+                    ge[idx].fitness -= 1
+                    nets.pop(idx)
+                    birds.pop(idx)
+                    ge.pop(idx)
+                if not pipe.passed and pipe.x < bird.x:
+                    pipe.passed = True
+                    add_pipe = True
             if pipe.x + pipe.pipe_top.get_width() < 0:
                 pipes_to_remove.append(pipe)
-            if not pipe.passed and pipe.x < bird.x:
-                pipe.passed = True
-                add_pipe = True
             pipe.move()
 
         if add_pipe:
             score += 1
+            for g in ge:
+                g.fitness += 5
             pipes.append(Pipe(600))
         for r_pipe in pipes_to_remove:
             pipes.remove(r_pipe)
-        bird.move()
-        if bird.y + bird.image.get_height() >= WIN_HEIGHT - 70:
-            run = False
 
-        draw_window(win, base, pipes, bird, score)
-    pg.quit()
-    quit()
+        for idx, bird in enumerate(birds):
+            bird.move()
+            if bird.y + bird.image.get_height() >= WIN_HEIGHT - 70 or bird.y < 0:
+                nets.pop(idx)
+                birds.pop(idx)
+                ge.pop(idx)
+
+        draw_window(win, base, pipes, birds, score)
 
 
-main()
+def run(config_path: str) -> None:
+    config = nt.config.Config(
+        nt.DefaultGenome,
+        nt.DefaultReproduction,
+        nt.DefaultSpeciesSet,
+        nt.DefaultStagnation,
+        config_path,
+    )
+
+    population = nt.Population(config)
+    population.add_reporter(nt.StdOutReporter(True))
+    population.add_reporter(nt.StatisticsReporter())
+
+    winner = population.run(fitness, 50)
+
+
+if __name__ == "__main__":
+    local_dir: str = os.path.dirname(__file__)
+    config_path: str = os.path.join(local_dir, "config_neat.txt")
+    run(config_path)
