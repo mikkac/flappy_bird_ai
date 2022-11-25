@@ -10,6 +10,8 @@ pg.font.init()
 WIN_WIDTH = 500
 WIN_HEIGHT = 800
 
+GEN = 0
+
 BIRD_IMGS: List[pg.Surface] = [
     pg.transform.scale2x(pg.image.load(os.path.join("images", bird)))
     for bird in ["bird1.png", "bird2.png", "bird3.png"]
@@ -161,7 +163,7 @@ class Base:
 
 
 def draw_window(
-    win, base: Base, pipes: List[Pipe], birds: List[Bird], score: int
+    win, base: Base, pipes: List[Pipe], birds: List[Bird], score: int, generation: int
 ) -> None:
     win.blit(BG_IMG, (0, 0))
 
@@ -170,6 +172,10 @@ def draw_window(
 
     text = SCORE_FONT.render(f"Score: {score}", True, (255, 255, 255))
     win.blit(text, (WIN_WIDTH - 10 - text.get_width(), 10))
+    
+    text = SCORE_FONT.render(f"Generation: {generation}", True, (255, 255, 255))
+    win.blit(text, (10, 10))
+
     base.draw(win)
     for bird in birds:
         bird.draw(win)
@@ -177,6 +183,8 @@ def draw_window(
 
 
 def fitness(genomes, config: nt.config.Config) -> None:
+    global GEN
+    GEN += 1
     nets: List[nt.nn.FeedForwardNetwork] = []
     ge = []
     birds: List[Bird] = []
@@ -256,7 +264,7 @@ def fitness(genomes, config: nt.config.Config) -> None:
                 birds.pop(idx)
                 ge.pop(idx)
 
-        draw_window(win, base, pipes, birds, score)
+        draw_window(win, base, pipes, birds, score, GEN)
 
 
 def run(config_path: str) -> None:
